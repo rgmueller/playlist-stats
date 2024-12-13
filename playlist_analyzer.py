@@ -1,6 +1,5 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from datetime import datetime
 import os
 from dotenv import load_dotenv
 
@@ -22,23 +21,30 @@ def get_playlist_tracks(playlist_url):
     results = sp.playlist_tracks(playlist_id)
     tracks = results['items']
     
-    # Get release dates and calculate ages
-    current_year = datetime.now().year
-    ages = []
-    
+    # Extract song names and artists
+    songs = []
     for track in tracks:
-        release_date = track['track']['album']['release_date']
-        release_year = int(release_date.split('-')[0])
-        age = current_year - release_year
-        ages.append(age)
+        track_info = track['track']
+        if track_info:  # Check if track exists (not None)
+            song_name = track_info['name']
+            # Get all artists for the track
+            artists = [artist['name'] for artist in track_info['artists']]
+            
+            songs.append({
+                'name': song_name,
+                'artists': artists
+            })
     
-    return np.mean(ages)
+    return songs
 
 # Example usage
 if __name__ == "__main__":
     playlist_url = input("Enter your Spotify playlist URL: ")
     try:
-        average_age = get_playlist_tracks(playlist_url)
-        print(f"The average age of songs in your playlist is {average_age:.1f} years")
+        songs = get_playlist_tracks(playlist_url)
+        print("\nPlaylist songs:")
+        for i, song in enumerate(songs, 1):
+            artists_str = ", ".join(song['artists'])
+            print(f"{i}. {song['name']} by {artists_str}")
     except Exception as e:
         print(f"An error occurred: {e}")
